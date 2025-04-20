@@ -147,14 +147,14 @@ class IyunyaNodesMenu {
   }
 
   // 显示创建节点的对话框
-  showCreateNodeDialog() {
+  showCreateNodeDialog(nodeType = "in") {
     // 创建对话框DOM元素
     const dialog = document.createElement("div");
     dialog.className = "iyunya-dialog";
     dialog.innerHTML = `
       <div class="iyunya-dialog-content">
         <div class="iyunya-dialog-header">
-          <h3>创建新节点</h3>
+          <h3>创建新${nodeType === "in" ? "输入" : "输出"}节点</h3>
           <button class="iyunya-dialog-close">&times;</button>
         </div>
         <div class="iyunya-dialog-body">
@@ -162,7 +162,7 @@ class IyunyaNodesMenu {
             <label>节点基本信息</label>
             <div class="node-info-row">
               <div class="node-name-container">
-                <label for="node-name">节点名称</label>
+                <label for="node-name">展示名称</label>
                 <input type="text" id="node-name" placeholder="请输入节点名称" />
               </div>
               <div class="node-id-container">
@@ -172,7 +172,7 @@ class IyunyaNodesMenu {
             </div>
           </div>
           <div class="iyunya-form-group">
-            <label>节点输入参数</label>
+            <label>节点${nodeType === "in" ? "输入" : "输出"}参数</label>
             <div id="input-params-container">
               <div class="input-param-row">
                 <input type="text" class="param-name" placeholder="参数名称" />
@@ -189,6 +189,7 @@ class IyunyaNodesMenu {
           </div>
         </div>
         <div class="iyunya-dialog-footer">
+          <input type="hidden" id="node-type" value="${nodeType}" />
           <button id="create-node-btn" class="iyunya-btn iyunya-btn-primary">创建节点</button>
           <button id="cancel-btn" class="iyunya-btn">取消</button>
         </div>
@@ -248,6 +249,7 @@ class IyunyaNodesMenu {
     dialog.querySelector("#create-node-btn").onclick = () => {
       const nodeName = dialog.querySelector("#node-name").value.trim();
       const nodeId = dialog.querySelector("#node-id").value.trim();
+      const nodeType = dialog.querySelector("#node-type").value;
       
       if (!nodeName) {
         this.showAlert("请输入节点名称");
@@ -273,20 +275,20 @@ class IyunyaNodesMenu {
       if (hasError) return;
       
       if (Object.keys(inputs).length === 0) {
-        this.showAlert("请至少添加一个输入参数");
+        this.showAlert("请至少添加一个参数");
         return;
       }
       
       // 发送API请求创建节点
-      this.createNode(nodeName, inputs, dialog, nodeId);
+      this.createNode(nodeName, inputs, dialog, nodeId, nodeType);
     };
   }
   
   // 显示节点管理对话框
   async showManageNodesDialog() {
     try {
-      // 获取节点列表
-      const response = await fetch("/api/iyunya/in/list");
+      // 获取所有节点列表
+      const response = await fetch("/api/iyunya/node/list");
       const result = await response.json();
       
       if (result.status !== "success") {
@@ -295,45 +297,91 @@ class IyunyaNodesMenu {
       
       const nodes = result.nodes || [];
       
+      // 分离输入和输出节点
+      const inNodes = nodes.filter(node => node.group === "in");
+      const outNodes = nodes.filter(node => node.group === "out");
+      
       // 创建对话框DOM元素
       const dialog = document.createElement("div");
       dialog.className = "iyunya-dialog";
       dialog.innerHTML = `
         <div class="iyunya-dialog-content iyunya-dialog-large">
           <div class="iyunya-dialog-header">
-            <h3>管理动态参数节点</h3>
+            <h3>管理动态节点</h3>
             <button class="iyunya-dialog-close">&times;</button>
           </div>
           <div class="iyunya-dialog-body">
-            <div class="iyunya-nodes-controls" style="margin-bottom: 20px;">
-              <button id="create-new-node-btn" class="iyunya-btn iyunya-btn-primary">创建新节点</button>
-            </div>
-            <div class="iyunya-nodes-list">
-              <table class="iyunya-table">
-                <thead>
-                  <tr>
-                    <th>展示名称</th>
-                    <th>类型</th>
-                    <th>输出数量</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${nodes.length > 0 ? 
-                    nodes.map(node => `
-                      <tr data-node-id="${node.id}">
-                        <td>${node.display_name}</td>
-                        <td>${node.node_name}</td>
-                        <td>${node.return_names.length}</td>
-                        <td>
-                          <button class="iyunya-btn iyunya-btn-small iyunya-btn-danger delete-node-btn">删除</button>
-                        </td>
+            <div class="iyunya-tabs">
+              <div class="iyunya-tab-buttons">
+                <button class="iyunya-tab-btn active" data-tab="in">输入节点</button>
+                <button class="iyunya-tab-btn" data-tab="out">输出节点</button>
+              </div>
+              
+              <div class="iyunya-tab-content active" id="tab-in">
+                <div class="iyunya-nodes-controls" style="margin-bottom: 20px;">
+                  <button id="create-in-node-btn" class="iyunya-btn iyunya-btn-primary">创建新输入节点</button>
+                </div>
+                <div class="iyunya-nodes-list">
+                  <table class="iyunya-table">
+                    <thead>
+                      <tr>
+                        <th>展示名称</th>
+                        <th>类型</th>
+                        <th>参数个数</th>
+                        <th>操作</th>
                       </tr>
-                    `).join("") : 
-                    '<tr><td colspan="4" class="empty-list">没有创建任何节点</td></tr>'
-                  }
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      ${inNodes.length > 0 ? 
+                        inNodes.map(node => `
+                          <tr data-node-id="${node.id}" data-node-group="${node.group}">
+                            <td>${node.display_name}</td>
+                            <td>${node.node_name}</td>
+                            <td>${node.return_names ? node.return_names.length : 0}</td>
+                            <td>
+                              <button class="iyunya-btn iyunya-btn-small iyunya-btn-danger delete-node-btn">删除</button>
+                            </td>
+                          </tr>
+                        `).join("") : 
+                        '<tr><td colspan="4" class="empty-list">没有创建任何输入节点</td></tr>'
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <div class="iyunya-tab-content" id="tab-out">
+                <div class="iyunya-nodes-controls" style="margin-bottom: 20px;">
+                  <button id="create-out-node-btn" class="iyunya-btn iyunya-btn-primary">创建新输出节点</button>
+                </div>
+                <div class="iyunya-nodes-list">
+                  <table class="iyunya-table">
+                    <thead>
+                      <tr>
+                        <th>展示名称</th>
+                        <th>类型</th>
+                        <th>参数个数</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${outNodes.length > 0 ? 
+                        outNodes.map(node => `
+                          <tr data-node-id="${node.id}" data-node-group="${node.group}">
+                            <td>${node.display_name}</td>
+                            <td>${node.node_name}</td>
+                            <td>${node.return_names ? node.return_names.length : 0}</td>
+                            <td>
+                              <button class="iyunya-btn iyunya-btn-small iyunya-btn-danger delete-node-btn">删除</button>
+                            </td>
+                          </tr>
+                        `).join("") : 
+                        '<tr><td colspan="4" class="empty-list">没有创建任何输出节点</td></tr>'
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
           <div class="iyunya-dialog-footer">
@@ -358,10 +406,30 @@ class IyunyaNodesMenu {
         document.body.removeChild(dialog);
       };
       
-      // 创建新节点按钮
-      dialog.querySelector("#create-new-node-btn").onclick = () => {
+      // Tab切换逻辑
+      dialog.querySelectorAll(".iyunya-tab-btn").forEach(btn => {
+        btn.onclick = () => {
+          // 移除所有活动状态
+          dialog.querySelectorAll(".iyunya-tab-btn").forEach(b => b.classList.remove("active"));
+          dialog.querySelectorAll(".iyunya-tab-content").forEach(c => c.classList.remove("active"));
+          
+          // 设置当前活动状态
+          btn.classList.add("active");
+          const tabId = btn.getAttribute("data-tab");
+          dialog.querySelector(`#tab-${tabId}`).classList.add("active");
+        };
+      });
+      
+      // 创建新输入节点按钮
+      dialog.querySelector("#create-in-node-btn").onclick = () => {
         document.body.removeChild(dialog);
-        this.showCreateNodeDialog();
+        this.showCreateNodeDialog("in");
+      };
+      
+      // 创建新输出节点按钮
+      dialog.querySelector("#create-out-node-btn").onclick = () => {
+        document.body.removeChild(dialog);
+        this.showCreateNodeDialog("out");
       };
       
       // 刷新节点列表
@@ -375,18 +443,19 @@ class IyunyaNodesMenu {
         btn.onclick = async (e) => {
           const row = e.target.closest("tr");
           const nodeId = row.getAttribute("data-node-id");
+          const nodeGroup = row.getAttribute("data-node-group");
           const nodeName = row.children[0].textContent;
           
           const confirmed = await this.showConfirm(`确定要删除节点 "${nodeName}" 吗？此操作不可撤销。`, "删除确认");
           if (confirmed) {
             try {
-              await this.deleteNode(nodeId);
+              await this.deleteNode(nodeId, nodeGroup);
               row.remove();
               
-              // 如果没有节点了，显示空列表信息
-              if (dialog.querySelectorAll("tbody tr").length === 0) {
-                const tbody = dialog.querySelector("tbody");
-                tbody.innerHTML = '<tr><td colspan="4" class="empty-list">没有创建任何节点</td></tr>';
+              // 如果当前类型的tab没有节点了，显示空列表信息
+              const tbody = row.parentElement;
+              if (tbody.querySelectorAll("tr").length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-list">没有创建任何${nodeGroup === "in" ? "输入" : "输出"}节点</td></tr>`;
               }
               
               // 重载页面上的节点
@@ -405,11 +474,12 @@ class IyunyaNodesMenu {
   }
   
   // 创建新节点
-  async createNode(name, inputs, dialog, nodeId) {
+  async createNode(name, inputs, dialog, nodeId, nodeType = "in") {
     try {
       const nodeData = {
         name: name,
-        inputs: inputs
+        inputs: inputs,
+        group: nodeType
       };
       
       // 如果提供了节点ID，则添加到请求数据中
@@ -417,7 +487,7 @@ class IyunyaNodesMenu {
         nodeData.id = nodeId;
       }
       
-      const response = await fetch("/api/iyunya/in", {
+      const response = await fetch("/api/iyunya/node", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -451,13 +521,16 @@ class IyunyaNodesMenu {
   }
   
   // 删除节点
-  async deleteNode(nodeId) {
-    const response = await fetch("/api/iyunya/in/delete", {
+  async deleteNode(nodeId, nodeGroup = "in") {
+    const response = await fetch("/api/iyunya/node/delete", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ id: nodeId })
+      body: JSON.stringify({ 
+        id: nodeId,
+        group: nodeGroup
+      })
     });
     
     const result = await response.json();
@@ -702,6 +775,39 @@ class IyunyaNodesMenu {
         color: #888;
         padding: 20px !important;
       }
+      
+      .iyunya-tabs {
+        width: 100%;
+      }
+      
+      .iyunya-tab-buttons {
+        display: flex;
+        border-bottom: 1px solid #333;
+        margin-bottom: 20px;
+      }
+      
+      .iyunya-tab-btn {
+        padding: 10px 20px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #ccc;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      
+      .iyunya-tab-btn.active {
+        border-bottom-color: #0074d9;
+        color: white;
+      }
+      
+      .iyunya-tab-content {
+        display: none;
+      }
+      
+      .iyunya-tab-content.active {
+        display: block;
+      }
     `;
     
     document.head.appendChild(style);
@@ -749,7 +855,7 @@ app.registerExtension({
       // 创建"iyunya"按钮
       const manageButton = document.createElement("button");
       manageButton.id = "iyunya-nodes-button";
-      manageButton.textContent = "iyunya";
+      manageButton.textContent = "工作流输入输出";
       manageButton.className = "comfyui-button comfyui-menu-mobile-collapse"; // 添加菜单折叠响应类
       manageButton.title = "Iyunya Nodes Manager"; // 添加tooltip
       manageButton.setAttribute("aria-label", "Iyunya Nodes Manager");
