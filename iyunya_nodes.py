@@ -302,7 +302,7 @@ def load_all_saved_nodes():
 
 
 # API路由处理函数
-@PromptServer.instance.routes.post("/api/iyunya/node")
+@PromptServer.instance.routes.post("/api/iyunya/node/create")
 async def api_create_iyunya_node(request):
     try:
         data = await request.json()

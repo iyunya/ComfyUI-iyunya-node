@@ -487,7 +487,7 @@ class IyunyaNodesMenu {
         nodeData.id = nodeId;
       }
       
-      const response = await fetch("/api/iyunya/node", {
+      const response = await fetch("/api/iyunya/node/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
