@@ -78,23 +78,23 @@ class IyunyaOutNode:
         pass
     
     def execute(self, **kwargs):
-        # 使用kwargs中的所有输入值作为输出
-        # 输出顺序基于RETURN_NAMES
-        result = []
+        # 收集输入数据
+        collected_data = []
+        
         for name in self.RETURN_NAMES:
             if name in kwargs:
-                result.append(kwargs[name])
+                collected_data.append({"name": name, "value": kwargs[name]})
             else:
                 # 如果输入中没有对应的值，提供一个默认值
-                # 基于输出类型
-                type_idx = self.RETURN_NAMES.index(name)
-                if type_idx < len(self.RETURN_TYPES):
-                    return_type = self.RETURN_TYPES[type_idx]
-                    result.append(get_default_value_for_type(return_type))
-                else:
-                    result.append(None)
+                collected_data.append({"name": name, "value": None})
+                
+        # 获取节点的真实class_type
+        node_class_type = self.__class__.__name__
         
-        return tuple(result)
+        # 返回带有UI数据的字典，使用真实class_type作为键
+        ui_result = {"ui": {node_class_type: collected_data}}
+        logger.info(f"ui_result: {ui_result}")
+        return ui_result
 
 
 def get_default_value_for_type(type_name):
@@ -199,7 +199,7 @@ def create_dynamic_node(config, save_to_disk=True):
     else:  # out
         DynamicNodeClass = type(class_name, (IyunyaOutNode,), {
             "_input_types": input_types,
-            "RETURN_TYPES": tuple(config.get("inputs", {}).values()),
+            "RETURN_TYPES": (), # 输出节点不需要返回值
             "RETURN_NAMES": tuple(config.get("inputs", {}).keys()),
         })
     
