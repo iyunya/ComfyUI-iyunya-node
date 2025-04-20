@@ -24,7 +24,7 @@ ComfyUI-iyunya-nodes 是一个 [ComfyUI](https://github.com/comfyanonymous/Comfy
 
 4. 导出工作流
 
-导出工作流json，通常会用于服务测存储
+导出工作流json，通常会导出后在服务侧存储
 
    ![导出工作流](asserts/export_workflow.png)
 
