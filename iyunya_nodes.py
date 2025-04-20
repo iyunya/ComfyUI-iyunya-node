@@ -558,8 +558,8 @@ default_out_node_config = {
 load_all_saved_nodes()
 
 # 确保默认节点存在（如果不存在则创建）
-if "in" not in DYNAMIC_NODE_CLASSES or "default" not in DYNAMIC_NODE_CLASSES.get("in", {}):
+if "in" not in DYNAMIC_NODE_CLASSES or len(DYNAMIC_NODE_CLASSES["in"]) == 0:
     create_dynamic_node(default_in_node_config)
 
-if "out" not in DYNAMIC_NODE_CLASSES or "default" not in DYNAMIC_NODE_CLASSES.get("out", {}):
+if "out" not in DYNAMIC_NODE_CLASSES or len(DYNAMIC_NODE_CLASSES["out"]) == 0:
     create_dynamic_node(default_out_node_config)
