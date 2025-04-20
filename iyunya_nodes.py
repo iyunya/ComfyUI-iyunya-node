@@ -222,6 +222,9 @@ def create_dynamic_node(config, save_to_disk=True):
     
     # 保存配置到磁盘
     if save_to_disk:
+        # 添加创建时间
+        from datetime import datetime
+        config["create_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         save_node_config(node_id, config)
     
     logger.info(f"创建节点成功: {display_name} (ID: {node_id}, 组: {group})")
@@ -288,13 +291,25 @@ def load_all_saved_nodes():
         for group in ["in", "out"]:
             group_dir = os.path.join(NODES_CONFIG_DIR, group)
             if os.path.exists(group_dir):
+                # 收集所有节点配置和创建时间
+                node_configs = []
                 for filename in os.listdir(group_dir):
                     if filename.endswith('.json'):
                         node_id = os.path.splitext(filename)[0]
                         config = load_node_config(node_id, group)
                         if config:
-                            create_dynamic_node(config, save_to_disk=False)  # 不重复保存
-                            loaded_count += 1
+                            # 如果没有创建时间，设置一个默认值确保排序不会出错
+                            if "create_time" not in config:
+                                config["create_time"] = "2000-01-01 00:00:00"
+                            node_configs.append(config)
+                
+                # 按创建时间排序
+                node_configs.sort(key=lambda x: x.get("create_time", "2000-01-01 00:00:00"))
+                
+                # 按排序后的顺序创建节点
+                for config in node_configs:
+                    create_dynamic_node(config, save_to_disk=False)  # 不重复保存
+                    loaded_count += 1
         
         logger.info(f"已加载 {loaded_count} 个持久化动态节点")
     except Exception as e:
