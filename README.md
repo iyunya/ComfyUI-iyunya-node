@@ -2,6 +2,103 @@
 
 ComfyUI-iyunya-nodes 是一个 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) 自定义节点集合，提供动态创建输入/输出节点的功能，方便构建更加模块化和灵活的工作流。
 
+## 使用示例
+
+1. 创建输入参数节点
+
+点击右上角【工作流输入输出】编辑输入参数节点定义
+
+   ![创建节点参数](asserts/create_node_param.png)
+
+2. 选择输入参数节点
+
+创建节点定义后刷新页面，即可通过【工作流】/【输入】选择之前创建的节点
+
+   ![选择节点](asserts/select_node.png)
+
+3. 配置工作流
+
+将该节点用于工作流配置
+
+   ![配置工作流](asserts/config_workflow.png)
+
+4. 导出工作流
+
+导出工作流json，通常会用于服务测存储
+
+   ![导出工作流](asserts/export_workflow.png)
+
+5. API对接逻辑
+
+导出的工作流json，根据nodes中type前缀 `iyunya_in_` 即可定位到输入节点，根据其中outputs参数解析，即可进行API参数替换
+
+```json
+
+    {
+      "id": 10,
+      "type": "iyunya_in_93edec8c",
+      "pos": [
+        -138.034423828125,
+        203.829833984375
+      ],
+      "size": [
+        315,
+        190
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "links": [
+            10
+          ]
+        },
+        {
+          "label": "negative",
+          "name": "negative",
+          "type": "STRING",
+          "links": [
+            11
+          ]
+        },
+        {
+          "label": "width",
+          "name": "width",
+          "type": "INT",
+          "links": [
+            12
+          ]
+        },
+        {
+          "label": "height",
+          "name": "height",
+          "type": "INT",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.29",
+        "Node name for S&R": "iyunya_in_93edec8c"
+      },
+      "widgets_values": [
+        "a beatiful girl",
+        "text, watermark",
+        512,
+        512
+      ]
+    }
+
+
+```
+
 ## 功能特点
 
 - **动态节点创建**：允许用户通过界面动态创建自定义输入和输出节点
