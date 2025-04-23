@@ -6,6 +6,37 @@ class IyunyaNodesMenu {
     // 保留简化版的构造函数，移除不需要的菜单项数组
   }
 
+  // 添加对话框外部点击关闭和ESC键关闭功能
+  setupDialogCloseEvents(dialog, onClose) {
+    // 点击对话框外部区域关闭
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        if (typeof onClose === 'function') {
+          onClose(false);
+        }
+        document.body.removeChild(dialog);
+      }
+    });
+    
+    // ESC键关闭
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (typeof onClose === 'function') {
+          onClose(false);
+        }
+        document.body.removeChild(dialog);
+        document.removeEventListener('keydown', handleKeyDown);
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // 返回清理函数
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }
+
   // 自定义 alert 对话框
   showAlert(message, title = "提示") {
     return new Promise((resolve) => {
@@ -44,6 +75,9 @@ class IyunyaNodesMenu {
         document.body.removeChild(dialog);
         resolve(true);
       };
+      
+      // 添加对话框外部点击和ESC关闭
+      this.setupDialogCloseEvents(dialog, resolve);
     });
   }
   
@@ -95,6 +129,9 @@ class IyunyaNodesMenu {
         document.body.removeChild(dialog);
         resolve(true); // 立即刷新
       };
+      
+      // 添加对话框外部点击和ESC关闭
+      this.setupDialogCloseEvents(dialog, resolve);
     });
   }
   
@@ -143,6 +180,9 @@ class IyunyaNodesMenu {
         document.body.removeChild(dialog);
         resolve(true);
       };
+      
+      // 添加对话框外部点击和ESC关闭
+      this.setupDialogCloseEvents(dialog, resolve);
     });
   }
 
@@ -282,6 +322,9 @@ class IyunyaNodesMenu {
       // 发送API请求创建节点
       this.createNode(nodeName, inputs, dialog, nodeId, nodeType);
     };
+    
+    // 添加对话框外部点击和ESC关闭
+    this.setupDialogCloseEvents(dialog);
   }
   
   // 显示节点管理对话框
@@ -467,6 +510,8 @@ class IyunyaNodesMenu {
         };
       });
       
+      // 添加对话框外部点击和ESC关闭
+      this.setupDialogCloseEvents(dialog);
     } catch (error) {
       console.error("[Iyunya Nodes] 获取节点列表失败:", error);
       this.showAlert(`获取节点列表失败: ${error.message}`, "获取失败");
