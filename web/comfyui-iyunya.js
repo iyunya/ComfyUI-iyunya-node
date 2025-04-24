@@ -493,15 +493,32 @@ class IyunyaNodesMenu {
           if (confirmed) {
             try {
               await this.deleteNode(nodeId, nodeGroup);
-              row.remove();
               
-              // 如果当前类型的tab没有节点了，显示空列表信息
+              // 保存对tbody的引用和当前的tab ID
               const tbody = row.parentElement;
-              if (tbody.querySelectorAll("tr").length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="empty-list">没有创建任何${nodeGroup === "in" ? "输入" : "输出"}节点</td></tr>`;
+              const tabId = nodeGroup === "in" ? "tab-in" : "tab-out";
+              
+              // 安全地移除行
+              if (row && row.parentElement) {
+                row.remove();
               }
               
-              // 重载页面上的节点
+              // 检查tbody是否仍然存在于DOM中并且是否有子元素
+              if (tbody && tbody.isConnected) {
+                // 获取可见的行数量
+                const visibleRows = tbody.querySelectorAll("tr:not(.empty-list)").length;
+                
+                // 如果没有可见行，添加空列表消息
+                if (visibleRows === 0) {
+                  // 清空tbody并添加空列表消息
+                  tbody.innerHTML = `<tr><td colspan="4" class="empty-list">没有创建任何${nodeGroup === "in" ? "输入" : "输出"}节点</td></tr>`;
+                }
+              }
+              
+              // 先显示删除成功消息，不立即重载节点
+              await this.showAlert(`节点 "${nodeName}" 已成功删除，建议刷新页面以更新节点列表`, "删除成功");
+              
+              // 刷新节点定义，但不清空工作流
               this.reloadNodes();
             } catch (error) {
               this.showAlert(`删除节点失败: ${error.message}`, "删除失败");
@@ -589,13 +606,18 @@ class IyunyaNodesMenu {
   
   // 重新加载节点（刷新界面）
   reloadNodes() {
-    // 通知ComfyUI刷新节点列表
+    // 通知ComfyUI刷新节点列表，但不清空当前工作流
     if (app && app.graph) {
-      app.graph.clear();
+      // 不再调用app.graph.clear()，避免清空当前工作流
       
       // 触发重新加载节点定义
       const reloadEvent = new CustomEvent("comfy.nodes.changed");
       document.dispatchEvent(reloadEvent);
+      
+      // 刷新节点菜单
+      if (app.onSearchResultsUpdate) {
+        app.onSearchResultsUpdate();
+      }
     } else {
       // 如果app不可用，尝试刷新页面
       window.location.reload();
