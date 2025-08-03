@@ -14,6 +14,17 @@ ComfyUI-iyunya-nodes 是一个 [ComfyUI](https://github.com/comfyanonymous/Comfy
 
 **使用方法**: 详见 [Qwen-VL OCR 插件说明](README_QwenVL_OCR.md)
 
+## 🆕 新功能：文字叠加显示 (Text Overlay)
+
+新增文字叠加显示节点，完美配合OCR识别结果，支持：
+- 📝 将OCR识别的文字直接显示在图片上
+- 🎨 自定义字体大小、颜色、背景色
+- 📍 多种文字位置模式（上方、下方、中心、左右）
+- 🌏 自动检测和使用系统中文字体
+- 🎛️ 透明度控制和自定义字体支持
+
+**使用方法**: 详见 [文字叠加插件说明](README_TextOverlay.md)
+
 ## 使用示例
 
 1. 创建输入参数节点
