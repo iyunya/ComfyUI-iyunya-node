@@ -19,8 +19,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {}
 
 # 节点配置保存路径
 # 当前文件的父级目录平行存储saved_nodes
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-NODES_CONFIG_DIR = os.path.join(os.path.dirname(parent_dir), "saved_nodes")
+NODES_CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "saved_nodes")
 os.makedirs(NODES_CONFIG_DIR, exist_ok=True)
 
 
