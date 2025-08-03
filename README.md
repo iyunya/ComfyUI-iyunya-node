@@ -2,6 +2,18 @@
 
 ComfyUI-iyunya-nodes 是一个 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) 自定义节点集合，提供动态创建输入/输出节点的功能，方便构建更加模块化和灵活的工作流。
 
+## 🆕 新功能：阿里云百炼文字识别 (Qwen-VL OCR)
+
+新增基于阿里云百炼大模型服务的图片文字识别节点，支持：
+- 🔍 高精度OCR文字识别  
+- 📍 自动标注文字区域坐标
+- 🌐 多语言识别和翻译
+- 🎨 可视化边界框标记
+- 🎭 生成文字区域遮罩
+- 📊 结构化JSON输出
+
+**使用方法**: 详见 [Qwen-VL OCR 插件说明](README_QwenVL_OCR.md)
+
 ## 使用示例
 
 1. 创建输入参数节点
