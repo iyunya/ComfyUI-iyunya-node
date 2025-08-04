@@ -121,9 +121,24 @@ class TextOverlayNode:
                     ]
                 else:  # Linux
                     font_paths = [
+                        # 中文字体优先
+                        "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+                        "/usr/share/fonts/truetype/noto/NotoSerifCJK-Regular.ttc",
+                        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+                        "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc",
+                        "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+                        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+                        "/usr/share/fonts/truetype/arphic/ukai.ttc",
+                        "/usr/share/fonts/truetype/arphic/uming.ttc",
+                        "/usr/share/fonts/truetype/fonts-japanese-gothic.ttf",
+                        "/usr/share/fonts/truetype/fonts-japanese-mincho.ttf",
+                        # 系统可能的其他中文字体位置
+                        "/System/Library/Fonts/PingFang.ttc",
+                        "/usr/share/fonts/TTF/DejaVuSans.ttf",
+                        "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+                        # 备用西文字体
                         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
                         "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-                        "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
                     ]
                 
                 # 尝试加载系统字体
@@ -134,21 +149,20 @@ class TextOverlayNode:
                         except Exception:
                             continue
                 
-                # 如果都失败了，使用默认字体
-                logger.warning("无法加载系统字体，使用PIL默认字体")
+                # 如果都失败了，尝试安装提示和使用默认字体
+                logger.warning("无法加载系统中文字体，建议安装字体包：sudo apt-get install fonts-noto-cjk fonts-wqy-microhei fonts-wqy-zenhei")
+                logger.warning("使用PIL默认字体，可能无法正确显示中文")
                 return ImageFont.load_default()
                 
         except Exception as e:
             logger.warning(f"字体加载失败：{str(e)}，使用默认字体")
             return ImageFont.load_default()
     
-    def get_font_path(self, font_path=""):
-        """获取字体文件路径"""
-        if font_path and os.path.exists(font_path):
-            return font_path
-        
-        # 获取系统字体路径
+    def detect_available_fonts(self):
+        """检测系统中可用的字体"""
         system = platform.system()
+        available_fonts = []
+        
         if system == "Windows":
             font_paths = [
                 "C:/Windows/Fonts/msyh.ttc",
@@ -164,14 +178,52 @@ class TextOverlayNode:
             ]
         else:  # Linux
             font_paths = [
+                # 中文字体优先
+                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+                "/usr/share/fonts/truetype/noto/NotoSerifCJK-Regular.ttc",
+                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+                "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc",
+                "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+                "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+                "/usr/share/fonts/truetype/arphic/ukai.ttc",
+                "/usr/share/fonts/truetype/arphic/uming.ttc",
+                "/usr/share/fonts/truetype/fonts-japanese-gothic.ttf",
+                "/usr/share/fonts/truetype/fonts-japanese-mincho.ttf",
+                # 系统可能的其他中文字体位置
+                "/System/Library/Fonts/PingFang.ttc",
+                "/usr/share/fonts/TTF/DejaVuSans.ttf",
+                "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+                # 备用西文字体
                 "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
                 "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
             ]
         
         for path in font_paths:
             if os.path.exists(path):
-                return path
+                available_fonts.append(path)
+        
+        return available_fonts
+
+    def get_font_path(self, font_path=""):
+        """获取字体文件路径"""
+        if font_path and os.path.exists(font_path):
+            return font_path
+        
+        # 检测可用字体
+        available_fonts = self.detect_available_fonts()
+        
+        if available_fonts:
+            # 记录找到的字体
+            logger.info(f"检测到可用字体: {available_fonts[0]}")
+            return available_fonts[0]
+        else:
+            # 记录字体检测失败的详细信息
+            system = platform.system()
+            logger.warning(f"在{system}系统上未找到可用的中文字体")
+            if system == "Linux":
+                logger.warning("建议安装中文字体包:")
+                logger.warning("sudo apt-get install fonts-noto-cjk fonts-wqy-microhei fonts-wqy-zenhei")
+                logger.warning("或者: sudo apt-get install fonts-arphic-ukai fonts-arphic-uming")
         
         return None
     
